@@ -4,7 +4,7 @@
 
 The goal of this project was to build a machine learning system that predicts the delivery/fulfilment time of restaurant orders.
 
-Because the target variable, `Time_taken(min)`, is a continuous numerical value measured in minutes, I treated the task as a **supervised regression problem**.
+Because the target variable, `Time_taken(min)`, is a continuous numerical value measured in minutes, I treated the task as a supervised regression problem.
 
 I defined the prediction point as the moment a customer places an order. It is this assumption that affected feature selection for me in this project. My thinking was, information that would only become available later in the delivery process should not be available to the model at prediction time.
 
@@ -16,7 +16,7 @@ It is for this reason that I excluded `Time_Order_picked`. Even though it exists
 
 The project used the Food Delivery Time dataset on Kaggle provided for the assignment.
 
-The training dataset contained **45,593 observations**. The target column, `Time_taken(min)`, was initially stored as strings like `(min) 24`, so before modelling, it was parsed into a numerical target.
+The training dataset contained 45,593 observations. The target column, `Time_taken(min)`, was initially stored as strings like `(min) 24`, so before modelling, it was parsed into a numerical target.
 
 Upon further inspection I also saw that several numerical columns were stored as strings and missing values were sometimes represented by the literal string `"NaN"`. These values were also converted into appropriate numerical values or actual missing values before modelling.
 
@@ -34,20 +34,20 @@ Raw identifiers such as `ID` and `Delivery_person_ID` were excluded. The raw coo
 
 Exploratory analysis revealed a data problem in the geographical coordinates.
 
-The initial Haversine calculation produced a maximum delivery distance of approximately **19,693 km**, which was clearly inconsistent with a food-delivery problem.
+The initial Haversine calculation produced a maximum delivery distance of approximately 19,693 km, which was clearly inconsistent with a food-delivery problem.
 
 Investigation on this showed two issues:
 
 1. Some restaurant coordinates contained negative signs while the corresponding delivery coordinates were geographically close when their absolute values were considered.
-2. **3,640 restaurant locations (7.98%)** were recorded as `(0, 0)`.
+2. 3,640 restaurant locations (7.98%) were recorded as `(0, 0)`.
 
 The restaurant coordinate sign inconsistencies were then corrected before calculating distance. And `(0,0)` locations were treated as missing rather than as real geographical positions.
 
 After correction, the distance distribution became much more plausible:
 
-- Mean distance: **9.72 km**
-- Median distance: **9.19 km**
-- Maximum distance: **20.97 km**
+- Mean distance: 9.72 km
+- Median distance: 9.19 km
+- Maximum distance: 20.97 km
 
 The 3,640 invalid locations resulted in missing distance values, which were later handled by the preprocessing pipeline.
 
@@ -55,12 +55,12 @@ The 3,640 invalid locations resulted in missing distance values, which were late
 
 ## 3. Preprocessing Pipeline
 
-The data was split into training and test sets using an **80/20 split** with `random_state=42`.
+The data was split into training and test sets using an 80/20 split with `random_state=42`.
 
 This produced:
 
-- Training set: **36,474 orders**
-- Test set: **9,119 orders**
+- Training set: 36,474 orders
+- Test set: 9,119 orders
 
 The split was performed before fitting any learned preprocessing operations.
 
@@ -77,7 +77,7 @@ The numerical features were:
 - Distance
 - Order hour
 
-Missing numerical values were filled using **median imputation**, followed by `StandardScaler`.
+Missing numerical values were filled using median imputation, followed by `StandardScaler`.
 
 ### Categorical Features
 
@@ -91,7 +91,7 @@ The categorical features were:
 - City
 - Day of week
 
-Missing categorical values were filled using the **most frequent category**, followed by `OneHotEncoder(handle_unknown="ignore")`.
+Missing categorical values were filled using the most frequent category, followed by `OneHotEncoder(handle_unknown="ignore")`.
 
 Keeping these learned preprocessing operations inside the Pipeline ensures that statistics such as medians, scaling parameters and category mappings are learned from training data rather than from the complete dataset.
 
@@ -124,9 +124,9 @@ Of the three, Random Forest produced the strongest initial results, so I selecte
 
 ## 5. Hyperparameter Tuning
 
-I used `RandomizedSearchCV` with **3-fold cross-validation** on the training set.
+I used `RandomizedSearchCV` with 3-fold cross-validation on the training set.
 
-I optimised **Mean Absolute Error (MAE)** because ETA is measured in minutes, making MAE directly interpretable as the average magnitude of prediction error.
+I optimised Mean Absolute Error (MAE) because ETA is measured in minutes, making MAE directly interpretable as the average magnitude of prediction error.
 
 The search explored:
 
@@ -146,9 +146,7 @@ min_samples_leaf  = 1
 max_features      = 0.7
 ```
 
-The best cross-validation MAE was:
-
-**3.224 minutes**
+The best cross-validation MAE was 3.224 minutes
 
 The test set was not used to select these hyperparameters.
 
@@ -158,19 +156,19 @@ The test set was not used to select these hyperparameters.
 
 After tuning, the selected Random Forest was evaluated on the held-out test set.
 
-| Metric |            Result |
-| ------ | ----------------: |
-| MAE    | **3.240 minutes** |
-| RMSE   | **4.072 minutes** |
-| R²     |         **0.811** |
+| Metric |        Result |
+| ------ | ------------: |
+| MAE    | 3.240 minutes |
+| RMSE   | 4.072 minutes |
+| R²     |         0.811 |
 
-The MAE means that the predicted ETA differed from the actual delivery time by approximately **3.24 minutes on average**.
+The MAE means that the predicted ETA differed from the actual delivery time by approximately 3.24 minutes on average.
 
-The RMSE of **4.07 minutes** is higher than the MAE because RMSE penalises larger prediction errors more strongly.
+The RMSE of 4.07 minutes is higher than the MAE because RMSE penalises larger prediction errors more strongly.
 
-The R² of **0.811** indicates that the model explained approximately **81.1% of the variance in delivery time** on the held-out test set relative to predicting the target mean.
+The R² of 0.811 indicates that the model explained approximately 81.1% of the variance in delivery time on the held-out test set relative to predicting the target mean.
 
-Compared with the baseline MAE of 7.579 minutes, the tuned model reduced MAE by approximately **57%** on this split.
+Compared with the baseline MAE of 7.579 minutes, the tuned model reduced MAE by approximately 57% on this split.
 
 The cross-validation MAE of 3.224 minutes was also close to the held-out test MAE of 3.240 minutes, indicating similar performance across the training cross-validation folds and the final test sample.
 
@@ -196,9 +194,9 @@ Prediction error was higher under heavier traffic conditions in this test set. O
 
 ### Weather
 
-Errors across known weather categories ranged from approximately **2.94 to 3.37 minutes**.
+Errors across known weather categories ranged from approximately 2.94 to 3.37 minutes.
 
-Missing weather information was associated with a considerably higher MAE of approximately **6.35 minutes**.
+Missing weather information was associated with a considerably higher MAE of approximately 6.35 minutes.
 
 The differences between the known weather categories were relatively small, so I would not conclude from this experiment alone that a particular weather condition systematically causes poorer model performance.
 
@@ -219,8 +217,8 @@ Missing input data was one of the clearest weaknesses identified during error an
 
 | Input Data                   | Mean Absolute Error |
 | ---------------------------- | ------------------: |
-| Complete rows                |        **3.10 min** |
-| At least one missing feature |        **3.92 min** |
+| Complete rows                |            3.10 min |
+| At least one missing feature |            3.92 min |
 
 Error generally increased as more input features were missing. For example, observations with five or six missing features showed substantially higher average errors, although these groups contained relatively few observations.
 
@@ -228,7 +226,7 @@ This demonstrates that imputation allows the pipeline to continue making predict
 
 ### City
 
-Semi-urban orders showed a higher observed MAE of approximately **4.00 minutes**, but there were only **27 semi-urban observations** in the test set. This sample is too small to treat the result as strong evidence that the model systematically performs worse for semi-urban orders.
+Semi-urban orders showed a higher observed MAE of approximately 4.00 minutes, but there were only 27 semi-urban observations in the test set. This sample is too small to treat the result as strong evidence that the model systematically performs worse for semi-urban orders.
 
 ---
 
@@ -257,7 +255,7 @@ Because categorical variables are one-hot encoded, their importance is distribut
 
 ## 9. Limitations and Future Work
 
-The current experiment uses a random train-test split. A production ETA system should additionally be evaluated using a **temporal split**, where the model is trained on older orders and evaluated on newer orders. This would more closely represent the real deployment scenario.
+The current experiment uses a random train-test split. A production ETA system should additionally be evaluated using a temporal split, where the model is trained on older orders and evaluated on newer orders. This would more closely represent the real deployment scenario.
 
 The error analysis also showed that missing operational information reduces prediction quality. Improving upstream data completeness, particularly for traffic, weather, rider and location information, could therefore improve ETA reliability.
 
@@ -273,8 +271,8 @@ A mean baseline, Ridge Regression, Random Forest and Gradient Boosting were eval
 
 The final tuned Random Forest achieved:
 
-- **MAE: 3.240 minutes**
-- **RMSE: 4.072 minutes**
-- **R²: 0.811**
+- MAE: 3.240 minutes
+- RMSE: 4.072 minutes
+- R²: 0.811
 
 Beyond the aggregate metrics, error analysis showed that predictions were less reliable when operational information was missing and somewhat less accurate under heavier traffic and for longer-distance orders.
