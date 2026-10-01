@@ -263,7 +263,45 @@ The current distance feature uses Haversine distance, which represents straight-
 
 ---
 
-## 10. Conclusion
+## 10. Production Considerations
+
+This project is a prototype rather than a production-ready ETA system. Before deployment, additional engineering concerns like the following would need to be addressed.
+
+### Data and Feature Availability
+
+The production system would need to guarantee that every feature used by the model is available and correctly defined at prediction time. Missing operational information was associated with higher prediction error in the experiment, so data-quality monitoring would be important.
+
+The preprocessing pipeline can handle missing values and unseen categorical values through imputation and `OneHotEncoder(handle_unknown="ignore")`, but this prevents inference failures rather than guaranteeing reliable predictions when important information is absent.
+
+### Model and Data Drift
+
+Traffic patterns, restaurant operations, rider behaviour and delivery regions can change over time. A model trained on historical data may therefore become less representative of current deliveries.
+
+Production monitoring should track feature distributions and prediction errors over time. Where ground-truth delivery times become available after orders are completed, metrics such as MAE and RMSE could be monitored on recent orders and compared with historical performance.
+
+A retraining strategy should be based on observed degradation or meaningful changes in the underlying data rather than assuming that a fixed model remains reliable indefinitely.
+
+### New Cities and Categories
+
+The model may encounter cities, vehicle types or other categorical values that were not represented during training. The current encoder is configured to tolerate unknown categories, preventing the pipeline from failing, but predictions for substantially different operating environments may still be unreliable.
+
+Expansion into a new city should therefore include validation using representative data from that environment.
+
+### Distance and Routing
+
+The current `distance_km` feature uses Haversine distance. This measures straight-line geographical distance and does not account for road networks, route restrictions or actual travel time.
+
+A production ETA system could replace or supplement this feature with route distance and estimated travel duration from a routing system.
+
+### Prediction Uncertainty
+
+A single ETA such as "31 minutes" can imply more certainty than the model actually has. A production system should investigate prediction intervals or other uncertainty estimates so that the product can communicate realistic ETA ranges where appropriate.
+
+### Validation Strategy
+
+The current experiment uses a random train-test split. Before deployment, I would additionally perform temporal validation by training on older orders and evaluating on newer orders. This would more closely simulate how the model would encounter future orders in production.
+
+## 11. Conclusion
 
 This project developed a leakage-aware scikit-learn pipeline for restaurant ETA prediction.
 
